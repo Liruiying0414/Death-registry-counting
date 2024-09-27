@@ -1,0 +1,168 @@
+---
+title: "Analysis of Death register statistics in Toronto"
+subtitle: "with civic centre and location"
+author: 
+  - Ruiying Li
+thanks: "Code and data are available at: https://github.com/Liruiying0414/death-count"
+date: today
+date-format: long
+abstract: "This study analyzed death registration statistics in Toronto to understand mortality patterns and distributions in different city centers and locations. We found that the majority of deaths occur within urban areas, with significant differences between city centers highlighting differences in health outcomes and population density. This study provides valuable insights into how geographic and seasonal factors affect mortality trends in Toronto, which is crucial for public health planning and observing population mobility. By identifying these trends, our research findings can provide strategic basis for improving healthcare services and meeting the needs of different populations in urban environments."
+format: pdf
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(opendatatoronto)
+library(dplyr)
+library(knitr)
+library(lubridate)
+data <- read_csv(here::here("data/analysis_data/analysis_data.csv"))
+
+```
+
+# Introduction
+
+understand morality trend is important for public health, particularly in urban area with huge and diverse population with different health conditions like Toronto. Death Registry serves is a type of crucial resources to track this trend,revealing the factors leading to deaths in different citizen centers. This paper aims to analysis the geographic distribution of deaths in Toronto,by examining death registry statistics, exploring the morality pattern and distribution in different civic center in Toronto,and how seasonal change affect the death registry statistics.We conducted a detailed analysis of the number of deaths registered from 2020 to 2024,investigating how factors such as location affect mortality.Through analyzing data,we attempt to uncover trends that can provide information for public health strategies and observing population mobility.Our studies indicate that the majority of deaths occur within the Toronto metropolitan area, with significant differences between each center.This study not only emphasizes the differences in mortality based on location, but also highlights the importance of addressing these differences in public health planning.Understanding the location and time of death can guide policy makers in developing targeted interventions to improve the health status of vulnerable groups.The structure of the paper is as follow the data part outlines the data sources and how we analyze these data, the result section examines the main finding of morality trends by using the dataset we analyze above, and mention their effect on public health and tracking the population mobility, with discussing the limitations the dataset may have.Finally,the conclusion section would summarizes the main insights of this article and provides suggestions for future research direction.
+
+
+# Data {#sec-mydatasection}
+## Data background
+Understanding the mortality trends in urban environments is crucial for public health policies and resource allocation,especially for a city characterized by population diversity and varying health conditions across different regions like Toronto.This paper uses data from Toronto's death registration statistics[@DeathRegistry],which provided by 'opendatatoronto'[@rOpenDataToronto] to capture important information on the number of deaths recorded during a specific dates in Toronto.This dataset includes death records classified by various municipal  civic centers, death locations, and registration dates for these deaths.The raw data covers the period from 2011 to 2024,we only choose the data from 2020 to 2024 for analysis.The data underwent cleaning and analysis through R programming language [@citeR]. Cleaning was performed through 'tidyverse' package [@rTidyverse] ,'janitor' package[@rJanitor],and 'dplyr' package[@rDplyr],removing the unnecessary columns for analysis, and arrange data in the order of specific season period. Then install ggplot2 package [@rGgplot2] to visualize dataset,providing insights into the demographic and geographic factors influencing death rates in Toronto.
+
+## Data measurement
+
+In this study,the dataset was sourced from the death registry statistics for the city of Toronto,spanning from 2020 to 2024.The dataset captures the  following key variables:
+
+**Dates**:Register the specific month and year of death for time series analysis of mortality trends,where I divided into specific year and season in cleaning data.
+
+**civic center**:The code representing the citizen center for death registration, including ET, NY,SC,TO,which can indicate the impact of administrative regions on mortality rates.
+
+**number of death**: This variable represents the total number of deaths recorded each month and is the primary response variable for our analysis.
+
+**location**:This variable classifies deaths as occurring either within Toronto city limits or outside, and crucial for analyzing urban vs. suburban mortality patterns.
+
+The data was cleaned to ensure consistency,including transforming variable names into a standardized format,ensuring that dates were correctly formatted,and filtering for the relevant years from 2020 to 202, with no missing data was found.
+
+Summary statistics and visualizations,by mainly using bar plots to assess trends and relationships between the civic centers,seasons,and places of death,and mainly focus on assessing how these factors effect morality patterns across different region in Toronto,with discovering the relationship between population mobility and death registration.
+
+While there actually are some similar dataset like national morality data provided by Statistics Canada, the dataset we choose has specificity to city Toronto, allowing us focus on more localized and detailed analysis of urban mortality pattern and public health interventions specific to urban environments.
+
+## Trend of death toll changes over different time periods
+```{r}
+#| label: fig-season
+#| fig-cap: "Toronto all season death registry trend From 2020 Spring to 2024 Summer"
+#| echo: false
+seasonal_death_data <-data %>%group_by(year, season) %>%summarise(total_deaths = sum(number_of_death, na.rm = TRUE),.groups = "drop")
+
+ggplot(seasonal_death_data, aes(x = year, y = total_deaths,fill = season)) + geom_bar(stat = "identity",position = 'dodge')+
+  labs(title = "Death Count Trend by Year and Season", x = "Year", y = "Total deaths", fill = 'season')+theme_minimal()
+```
+Based on the results of @fig-season,sorting the death toll by four seansons over the past four years, which green represents 'Spring', blue represents 'Summer' and red represents 'Fall', purple for 'winter'. 
+Although the total deaths in different years and seasons shows complex fluctuations in the data from 2020 to 2024,the number of deaths in spring and Fall is more prominent than in other seasons,we found out that the death toll in Spring (Mar~May)was significantly higher than the other season, and show an increasing trend through these four years,this trend may be related to the cold weather and flu season in Toronto
+In addition, the death tons in Summer(Jun-August) also very high, and kept on increasing in recent years,which we consider this might be related to the extreme seasonal change may exacerbate specific health problems,such as cardiovascular and respiratory diseases, and the population flow after school break and reopen would also be a assumption for death number increasing.As we know, Canada is known as a immigrant country with multi-culture. 
+
+Through the bar graph,we also found out the death number in 2022 is unusually and extremely lower than other years,back to review the information, we found that the Fall of 2022 coincided with a major outbreak of the pandemic,and government around the world suggest people to stay at home,and work at home,we assume that the special policy during Pandemic period may lead to fluctuations in mortality rate.
+
+Moreover,The morality rate in spring and summer vary in different years,but both shows an increasing trend,with summer is going to become the main season with the highest number of deaths, especially in the later years.
+
+## Death tolls change through civic centre
+```{r}
+#| label: fig-civic
+#| fig-cap: "Total Death registry in different civic centre from 2020 to 2024"
+#| echo: false
+civic_death_data <- data %>%
+  group_by(civic_centre,year) %>%summarise(total_deaths = sum(number_of_death, na.rm = TRUE),.groups = 'drop')
+
+ggplot(civic_death_data, aes(x = civic_centre, y = total_deaths, fill = civic_centre )) +
+geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Death Count by Civic Centre", x = "Civic Centre", y = "total Deaths")
+```
+@fig-civic reveals the total death tolls in previous 4 years from 2020 to 2024, where red represents Etobicoke,green represents North York, blue represents Scarborough and purple represents Toronto. It is obvious that the death tolls in Etobicoke is the highest, up to 20000 deaths,followed by North York, which over 15000 deaths,with no significant difference between the other two civic centers.
+
+## Death tolls in Difference civic centre change by Season
+```{r}
+#| label: fig-civic-2
+#| fig-cap: "Different civic centre death registry in all season Toronto"
+#| echo: false
+civic_death_data <- data %>%
+  group_by(civic_centre,season) %>%summarise(total_deaths = sum(number_of_death, na.rm = TRUE),.groups = 'drop')
+
+ggplot(civic_death_data, aes(x = civic_centre, y = total_deaths, fill = season)) +
+  geom_bar(stat = "identity", position = "dodge")+
+  labs(title = "Death Count by season and civic centre", x = "civic centre", y = "total Deaths")+theme_minimal()
+```
+
+Ae we can see from the bar chart @fig-civic-2, where reveals the change death tolls in four different civic center, with the change of four season, where red represents Fall,green represents Spring, blue represents Summer and purple for Winter. Through this investigation of the seasonal changes in the number of deaths at different civic centers over a four-year period,we could tell by the result that the death toll in Etobicoke significantly increased during Spring and winter,while North York has the highest number of registered deaths in Spring,followed by summer,and the other two city centers have a similar pattern,only one peak season for registering death.
+
+\newpage
+## Death tolls change by location
+```{r}
+#| label: fig-location
+#| fig-cap: "death registry change with location "
+#| echo: false
+location_data <- data %>%
+  group_by(location,civic_centre) %>%summarise(total_deaths = sum(number_of_death, na.rm = TRUE),.groups = 'drop')
+
+ggplot(location_data, aes(x =location, y = total_deaths, fill = civic_centre)) +
+  geom_bar(stat = "identity", position = "dodge")+
+  labs(title = "Death Count by location in different civic center", x = "location", y = "total Deaths")+theme_minimal()
+```
+
+@fig-location shows the change of four civic center registered death tolls in different locations, that red represent ET,green represents NY,blue represents SC and purple represents TO.
+This bar chart indicates the majority of deaths occur locally in Toronto,only a small portion occurring outside the city,especially in Etobicoke and North York,where have the highest number of deaths,the total death tolls of these two civc centers both nearly 30000 death during previous four year,we assume this is because both ET and NY are known as residential districts, which are densely populated areas with a large aging population,this may lead to an increase in the number of registered deaths.In addition, residents in these areas may rely more on local medical facilities, resulting in a higher proportion of local death registrations.
+In contrast, the registered death toll in downtown Toronto and Scarborough is much lower,and almost all deaths are concentrated within the city.
+
+\newpage
+# Result
+This paper mainly uses bar chart to analyze the death registry statistics in Toronto,ans basically focus on finding how different civic centers,different death locations and the change of seasons would affect the death tolls in Toronto. 
+Through @fig-season,we figure out in the past four years, the data has shown significant seasonal changes.Overall,spring is the seasons with the highest number of registered deaths,and shown a significantly increase during past four years.
+From 2020 to 2022,the winter death toll is usually the second highest,especially during the pandemic,which may be related to increased health risks during the cold season,but in 2023,it started to decrease extremely,while the number of deaths in Fall and summer was significantly higher than before.
+This trend may be related to the public health interventions after the pandemic have improved winter health issues,or that other factors such as the spread of infectious diseases in Fall,have led to an increase in autumn mortality rates.
+Apart from that,the death number in summer 2024 is unusually higher,so we assume that except for the extreme seasonal change,the unexpected diseases and pandemic may also lead to increasing death rate.
+
+In this case,we also observe how other factors may influence to the morality rate in @fig-civic and @fig-civic-2,by observing the relationship between death number and different civic centers,under four seasons,we explored that there are significant differences in the number of registered deaths among different civic centers.
+Data shows that Etobicoke and North York are the two regions with highest number of registered deaths,especially in Spring,where it the time for school reopen,and a golden time for traveling Toronto.For NorthYork,another peak time for morality rate is Summer.
+In contrast, Scarborough and Downtown Toronto have fewer registered deaths, mainly concentrated during the spring season,while more registered death occur in Fall for Scarborough.This phenomenon indicates that residents in different regions may face different health risks in different seasons and not only the weather issue has a great impact on morality rate,but also population density and different social age group may have a significant impact on the number of registered deaths.
+
+To explore more possibility for the relationship between population mobility and morality rate,here we also Analyzed the data between number of deaths in different civic centers and different death locations in @fig-location,and there are significant differences in the registered place of death in different civic centers.
+
+In the death registrations of North York and Etobicoke,the majority of deaths occurred within the city of Toronto, with relatively fewer deaths occurring outside the city,significantly higher than downtown Toronto and Scarborough.This difference may reflect the trend of higher population density or aging residents in these regions.
+Etobicoke and North York are both important residential areas in Toronto,with a large number of families and elderly residents.This indicates that residents in these areas mainly reside within the city of Toronto and rely on the local healthcare system.In contrast,downtown Toronto and Scarborough has the lowest number of registered deaths, which may reflect the region's large younger population and more mobile population structure, or a better medical resource foundation.
+
+This research indicates that the mobility and population age group of residents in each civic center is closely related to the local death toll. Areas with strong liquidity,such as downtown Toronto,have fewer death registration numbers both inside or outside the city,while relatively stable areas, such as North York, are mainly registered locally,so we consider North York and Etobicoke has the biggest impact on the death tolls in Toronto city.
+
+\newpage
+
+# Limitations 
+
+However,I also noticed that there are some limitations in our dataset.
+
+**Firstly**,our data only contains four variable,which is lack of important variables that may affect mortality rates, such as population age structure, health status, socioeconomic status.Therefore, it is not possible to delve into the impact of these factors on the number of deaths.
+
+**Secondly**,the dataset only distinguishes whether the death occurred within or outside of Toronto,the specific geographic information is relatively vague.Without further subdividing the locations of death outside the city,it is impossible to explore the differences in mortality rates in different out of town regions.
+Apart from that,we are unable to distinguish the death of locals and immigrants,the registered deaths are either those of local residents or those of migrant populations.For example, deaths registered in downtown Toronto may include migrants,such as short-term workers, tourists, students,but this information is not included in the data,making it difficult to determine the difference in mortality rates and population mobility between local residents and migrants.
+
+**Thirdly**,The lack of information on the cause of death in the data does not provide relevant information on the cause of death.Therefore,it is impossible to distinguish deaths caused by different reasons,such as illness, accidents, natural aging, which limits the analysis to the overall trend of the number of deaths and cannot explore the impact of specific health issues on mortality rates.
+
+All of these limitations in data limit our ability to propose more feasible policies for future urban planning，making it difficult to comprehensively analyze the relationship between population mobility and mortality rates in Toronto.This also means that for peak mortality rates or high mortality rates in specific regions,some potential impact factor of population mobility may not be fully considered.
+
+
+# Summary
+This study analyzed death registration data from the city of Toronto and its surrounding areas over a four-year period from 2020 to 2024,exploring the distribution of deaths in different Civic Centers and the impact of seasonal changes on death toll.
+
+The research results show significant differences in death registration among different civic centers,with the highest number of registered deaths occurring in Etobicoke and North York,and spring consistently had the highest number of deaths across all four years,with fall typically following,except in more recent years where summer saw notable increases. 
+
+In terms of geographic distribution,it shows that the local death registration in Etobicoke and North York far exceeds that outside the city, while Scarborough and downtown Toronto registered fewer deaths overall.These findings suggest that public health measures should consider regional and seasonal differences,particularly in areas like North York and Etobicoke,to address seasonal mortality risks more effectively.
+
+Although this study revealed peaks in death registration in certain regions and seasons,there are limitations to the analysis.The lack of important variables such as population mobility and population density in the dataset limits our in-depth understanding of the relationship between population mobility and mortality rate.Future research can combine more detailed individual level mobility data and longer time span data to further explore the complex relationship between population mobility, population structure,and mortality rate.
+\newpage
+
+
+
+# References
